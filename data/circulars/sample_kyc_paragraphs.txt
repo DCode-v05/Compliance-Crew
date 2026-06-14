@@ -1,0 +1,20 @@
+RESERVE BANK OF INDIA
+Master Direction - Know Your Customer (KYC) Direction, 2016
+DBR.AML.BC.No.81/14.01.001/2015-16
+(Sample paragraphs for ComplianceCrew development. Wording approximates the
+real Master Direction but should not be relied on as legal text. Replace
+this file with the actual PDF for the demo.)
+
+2.3 Customer Due Diligence (CDD) Procedure. Regulated Entities (REs) shall obtain documents of identity and address of customers as part of the Customer Due Diligence process. The CDD process shall be undertaken at the time of commencement of an account-based relationship and the documents so obtained shall be preserved in accordance with the record retention requirements.
+
+3.1.4 Periodic Updation of KYC. Regulated Entities (REs) shall carry out periodic updation of KYC as detailed below: in case of high risk customers, periodic updation shall be carried out at least once in every two years; in case of medium risk customers, periodic updation shall be carried out at least once in every eight years; and in case of low risk customers, periodic updation shall be carried out at least once in every ten years from the date of opening of the account or last KYC updation.
+
+5.7 Cash Transaction Reporting. Regulated Entities shall report all cash transactions of value above rupees ten lakh, or its equivalent in foreign currency, as well as all series of cash transactions integrally connected to each other which have been valued below rupees ten lakh, where such series of transactions have taken place within a month and the aggregate value of such transactions exceeds rupees ten lakh.
+
+6.2 Risk Categorisation. Regulated Entities shall undertake risk categorisation of customers based on factors such as customer identity, social and financial status, nature of business activity, and information about the client's business and their location. The risk categorisation shall be reviewed at least once in every six months.
+
+7.4 Suspicious Transaction Reports. Regulated Entities shall submit a Suspicious Transaction Report (STR) to the Director, Financial Intelligence Unit-India (FIU-IND) within seven working days on being satisfied that the transaction is suspicious. The STR shall be submitted electronically in the format prescribed by FIU-IND.
+
+8.1 Employee Training. Regulated Entities shall have an ongoing employee training programme so that the members of the staff are adequately trained in KYC procedures. The training programme should have different focus for frontline staff, compliance staff and staff dealing with new customers.
+
+9.3 Record Maintenance. Regulated Entities shall maintain records of all transactions referred to in clause (1) of rule 3 of the Prevention of Money-Laundering (Maintenance of Records) Rules 2005, for a period of five years from the date of the transaction. The records of identity of clients shall be maintained for a period of five years after the business relationship has ended.

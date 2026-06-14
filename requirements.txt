@@ -1,0 +1,25 @@
+# Core orchestration
+langgraph>=0.2.50
+pydantic>=2.9.0
+
+# API backend
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.9
+
+# LLM provider (Groq — free tier)
+groq>=0.13.0
+
+# PDF parsing
+pypdf>=5.1.0
+pdfplumber>=0.11.4
+
+# Data
+pandas>=2.2.0
+
+# Env loading
+python-dotenv>=1.0.1
+
+# Testing
+pytest>=8.3.0
+pytest-asyncio>=0.24.0

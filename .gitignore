@@ -1,0 +1,46 @@
+# Environment
+.env
+.env.local
+.venv/
+venv/
+env/
+
+# Frontend (Next.js / Node)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Project artifacts
+compliance.db
+compliance.db-journal
+data/output/*.md
+!data/output/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Demo recordings (large)
+*.mp4
+*.webm
+*.mov
+
+# uv
+.uv-cache/
