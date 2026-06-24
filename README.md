@@ -1,186 +1,212 @@
 # ComplianceCrew
 
-## Project Description
-ComplianceCrew is an AI-powered system that automates **RBI (Reserve Bank of India) circular compliance**. A team of six specialist agents reads a regulatory circular, derives concrete control requirements, validates each other's interpretations against the source text, routes the work to bank departments, tests sample bank data for violations, and assembles an audit-ready report — with **every claim cited to a verbatim paragraph** of the regulation and **every model call chained with SHA-256** so the audit trail is provably untampered. The solution is deployed as an interactive web console, letting a compliance officer upload a circular and watch the agents reason in real time. Built for **SuRaksha Cyber Hackathon 2.0 · Canara Bank**, and powered entirely by a **free-tier model** (Groq Llama 3.3 70B) — no Azure OpenAI, no paid APIs.
+**Six AI agents that read an RBI circular, turn it into auditable bank controls, and prove every claim with a verbatim citation and a tamper-evident hash chain.**
 
----
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white) ![LangGraph](https://img.shields.io/badge/LangGraph-1C3C3C?style=flat&logo=langchain&logoColor=white) ![Pydantic](https://img.shields.io/badge/Pydantic-E92063?style=flat&logo=pydantic&logoColor=white) ![Groq](https://img.shields.io/badge/Groq-Llama_3.3_70B-F55036?style=flat&logo=meta&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js_14-000000?style=flat&logo=nextdotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat&logo=sqlite&logoColor=white) ![pytest](https://img.shields.io/badge/pytest-50_tests-0A9EDC?style=flat&logo=pytest&logoColor=white)
 
-## Project Details
+## Overview
 
-### Problem Statement
-RBI issues a continuous stream of circulars, and every regulated bank must translate each one into auditable controls, assign ownership, set deadlines, and prove compliance against live data. Done manually the process is slow and error-prone; done with a naive LLM it hallucinates requirements and fabricates citations. ComplianceCrew makes interpretation **automated and auditable at once** — cited, peer-validated, department-routed, and tamper-evident.
+The Reserve Bank of India publishes a steady stream of circulars, and every regulated bank has to translate each one into concrete controls, assign an owner, set a deadline, and then prove compliance against live data. Done by hand it's slow and easy to get wrong. Done with a naive LLM it's worse — the model invents requirements and fabricates citations that look authoritative but don't exist in the source.
 
-### The Agent Pipeline
-The system is a six-node [LangGraph](https://github.com/langchain-ai/langgraph) state machine with a single Pydantic-typed state. The Validator's conditional edge back to the Mapper is the spine of the design.
+ComplianceCrew takes a regulatory circular (PDF or text) and runs it through six specialist agents wired together as a LangGraph state machine. They read the document, derive control requirements, adversarially check each other's interpretations against the source text, route the work to bank departments, test sample bank data for actual violations, and assemble an audit-ready report. Two things make it usable in a compliance setting rather than just a demo: every claim is tied to a verbatim quote from the regulation, and every model call is folded into a SHA-256 hash chain so the audit trail is provably untampered.
+
+It was built for the **SuRaksha Cyber Hackathon 2.0** (Canara Bank track) and runs entirely on a free-tier model — Groq's Llama 3.3 70B — with no paid LLM APIs anywhere in the stack. The whole thing ships as a web console where a compliance officer uploads a circular and watches the agents reason in real time.
+
+## Key Features
+
+- **Six-agent pipeline on LangGraph** — Ingestor → Mapper → Validator → Assigner → Evidence Checker → Auditor, sharing one Pydantic-typed state object so no untyped dicts cross node boundaries.
+- **Verbatim citation guardrail** — every control must quote the regulation word-for-word; a quote that isn't a substring of the source is auto-rejected *before* an LLM call is spent.
+- **Adversarial retry loop** — the Validator reviews each control and, on rejection, sends it back to the Mapper with a quoted span as feedback. Retries are capped at 2 attempts per paragraph.
+- **Tamper-evident SHA-256 audit chain** — one hash-chained row per agent invocation, verifiable end-to-end; editing any historical row breaks every hash that follows it.
+- **LLM-proposes / Python-executes evidence checks** — the Evidence Checker emits a structured query plan; Python deterministically runs it against the bank data. The model never executes code.
+- **Department routing and CCO escalation** — approved controls are routed to one of six departments with a priority and deadline; high/critical-risk findings are escalated to the Chief Compliance Officer for human sign-off.
+- **Honest "Not evaluated" state** — a control that genuinely couldn't be tested is recorded as un-evaluated, never silently marked compliant.
+- **Live streaming console** — a Next.js 14 workspace with five views; the Pipeline view streams agent reasoning over Server-Sent Events.
+- **Grounded Q&A assistant** — a chatbot that answers compliance questions from the run, cites the regulation, and admits when the answer isn't in the analysis.
+- **Typed REST + SSE API** — FastAPI backend with Swagger docs and an endpoint to re-verify the audit chain on demand.
+- **50 pytest tests** covering the agents, the audit chain, the citation check, the graph wiring, and the DB layer.
+
+## How It Works
+
+### The shared state
+
+Everything hangs off a single `ComplianceState` Pydantic model (`src/state.py`). Each node reads from it and writes back to it — paragraphs, MAPs (Mapped Action Policies), validations, assignments, escalations, evidence checks, the final report, and the routing flags that drive the conditional edge. Citation is a required field on every MAP and every evidence check, so a control physically cannot exist in the state without a `paragraph_id`, a verbatim quote, a confidence score, and a source document id.
+
+### The pipeline
 
 ```
 PDF/TXT → Ingestor → Mapper → Validator → Assigner → Evidence Checker → Auditor → Report
-            (classify)  ▲          │        (route +    (query bank      (cited
-                        └─ retry ──┘         escalate)    data)            memo)
+            (classify)  ▲          │        (route +      (query bank        (cited
+                        └─ retry ──┘         escalate)      data)             memo)
                        conditional edge on rejection (cap = 2)
 ```
 
-| Agent | LLM | Role |
-|-------|-----|------|
-| **Ingestor** | No | Parses the circular into cite-able paragraphs; classifies it and scores urgency. |
-| **Mapper** | Yes | Translates each paragraph into a **MAP** (Mapped Action Policy) with a mandatory verbatim citation. |
-| **Validator** | Yes + hash check | Adversarially reviews each MAP; auto-rejects fabricated citations *before* the LLM via a substring hash check. |
-| **Assigner** | Yes | Routes approved controls to departments with priority, deadline, and dependencies; escalates high/critical risk to the CCO. |
-| **Evidence Checker** | Yes (plan only) | Emits a pandas query plan; Python deterministically runs it against synthetic bank data to count violations. The LLM never executes code. |
-| **Auditor** | Yes (1 call) | Assembles the final cited Markdown report. |
+The Validator's conditional edge back to the Mapper is the spine of the design (`src/graph.py`). After validation, `route_after_validation()` checks `rejected_map_ids`: if every rejected MAP has already hit the retry cap, it proceeds to the Assigner; otherwise it loops back to the Mapper to try again with the feedback.
 
-### Reliability Mechanisms
-- **Verbatim citation check** — every MAP must quote the regulation word-for-word; quotes that aren't a substring of the source are auto-rejected (`wrong_paragraph`) with no LLM call burned.
-- **Adversarial retry loop** — the Validator rejects flawed controls with a quoted span; the Mapper retries with that feedback until the interpretation holds or the retry cap is reached.
-- **Tamper-proof audit chain** — `entry_hash = sha256(prev_hash ‖ payload)`; editing any historical row breaks every subsequent hash, and the chain is verifiable end-to-end.
-- **CCO escalation** — high/critical-risk controls are flagged for human sign-off ("agents propose, humans approve").
-- **Honest evidence** — a control that can't actually be tested (e.g. rate-limited) is recorded as **Not evaluated**, never silently "compliant".
+### The agents
 
-### The Console
-The Next.js workspace ("Ledger" — a light, editorial design system) provides five views:
-- **Overview** — compliance posture: controls, approvals, rejections, violations, escalations, department workload, compliance rate, and live audit-chain integrity.
-- **Pipeline** — upload or select a circular and watch the six agents reason in real time (Server-Sent Events) over an animated agent-flow visualiser.
-- **Circulars** — document intelligence: classification, urgency score, reference number, and a drag-and-drop uploader for your own RBI PDFs.
-- **Controls** — every MAP with its citation, validation verdict, department routing, and evidence — plus the final report and the raw hash-chained audit trail.
-- **Assistant** — a grounded compliance Q&A chatbot; every regulatory claim is cited, and if the answer isn't in the analysis it says so.
+- **Ingestor** (no LLM) — parses the circular into cite-able paragraphs with section titles and page numbers, classifies the document, and scores its urgency. Deterministic, so the cheap structural work doesn't burn tokens.
+- **Mapper** (LLM) — translates each paragraph into a MAP: a control title and description, an evidence type, a risk category, and a mandatory citation. This is where regulation becomes an actionable control.
+- **Validator** (LLM + pre-LLM hash check) — adversarially reviews each MAP. Before the model is even called, a substring check (`src/utils/citation_check.py`) rejects any quote that isn't found verbatim in the source paragraph, tagged `wrong_paragraph`. Surviving MAPs are then reasoned over and either approved or rejected with a quoted span and a rejection category.
+- **Assigner** (LLM) — routes approved controls to one of six departments (IT/Digital, Retail Banking, Risk/AML, HR/Training, Legal/Compliance, Operations) with a priority, a deadline in days, and any cross-control dependencies. High and critical findings produce an Escalation to the CCO.
+- **Evidence Checker** (LLM for the plan only) — for each approved MAP it asks the model for a `QueryPlan` (which dataset, which filter expression, which columns). Python then loads the right CSV and runs `DataFrame.query()` on it (`src/agents/evidence_checker.py`). A malformed query is caught and recorded as an un-evaluated check rather than a false pass — the LLM proposes, Python decides.
+- **Auditor** (single LLM call) — assembles the final cited Markdown report from everything in the state.
 
----
+### The audit chain
+
+`src/utils/audit_chain.py` is a real, working hash-chained ledger, not a stub. Every LLM call is logged through one wrapper (`src/llm.py`), which means the audit trail is built for free as a side effect of normal operation. Each row stores `prev_hash` and `entry_hash = sha256(prev_hash ‖ canonical_payload)`, the genesis hash is 64 zeros, and the canonical payload is a fixed-order, unit-separator (`\x1f`) delimited string so the same logical row always hashes identically. `verify_chain()` walks the rows, recomputes the chain, and reports the 1-based index of the first row whose stored hash disagrees with the recomputed value. A regulator can call the verify endpoint and confirm nothing was edited after the fact.
+
+### The LLM wrapper
+
+All six agents go through `llm_call()` (`src/llm.py`), which targets Groq's `llama-3.3-70b-versatile`. It enforces structured output via a compact JSON-schema hint plus `response_format=json_object`, strips stray code fences, validates the response against the agent's Pydantic schema, logs the audit entry, and retries with exponential backoff — failing fast on permanent errors like a bad API key so a misconfiguration doesn't waste the free-tier token budget.
+
+### The console
+
+The Next.js 14 frontend ("Ledger" — a light, editorial design system using Fraunces, Archivo, and IBM Plex Mono) has five views:
+
+- **Overview** — compliance posture: control counts, approvals, rejections, violations, escalations, department workload, compliance rate, and live audit-chain integrity.
+- **Pipeline** — upload or pick a circular and watch the six agents reason in real time over an animated agent-flow visualiser, fed by an `EventSource` SSE stream.
+- **Circulars** — document intelligence (classification, urgency, reference number) with a drag-and-drop uploader for your own RBI PDFs.
+- **Controls** — every MAP with its citation, validation verdict, routing, and evidence, plus the final report and the raw hash-chained audit trail.
+- **Assistant** — the grounded compliance Q&A chatbot.
+
+## Results / Highlights
+
+- **Six-agent pipeline** with a working adversarial retry loop (cap = 2) and a fully verifiable SHA-256 audit chain — `verify_chain()` pinpoints the first tampered row.
+- **~4,900 lines of Python** (agents, API, scripts, tests) and **~2,100 lines of TypeScript/TSX** for the console.
+- **50 pytest test functions** across the agents, audit chain, citation check, graph, DB, and LLM wrapper.
+- **Synthetic bank dataset generated in-house**: 10,000 customers and 50,000 transactions, with deliberately seeded violations (e.g. 200 unflagged large transactions over ₹10 lakh) so the Evidence Checker has real anomalies to find.
+- **Zero paid LLM spend** — runs entirely on free-tier Groq Llama 3.3 70B (~300 tok/s), and the JSON-schema hints are minified specifically to stretch the free daily token budget.
 
 ## Tech Stack
-- **Backend:** Python 3.11+, FastAPI, Uvicorn
-- **Orchestration:** LangGraph, Pydantic v2
-- **LLM:** Groq Llama 3.3 70B (free tier)
-- **Data & storage:** SQLite (SHA-256 hash-chained audit trail), pandas, pypdf / pdfplumber
-- **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS
-- **Type:** Fraunces (display) · Archivo (body) · IBM Plex Mono (data)
-- **Testing:** pytest
 
----
+- **Language(s):** Python 3.11+, TypeScript
+- **Backend / orchestration:** FastAPI, Uvicorn, LangGraph, Pydantic v2
+- **LLM:** Groq Llama 3.3 70B (`llama-3.3-70b-versatile`, free tier)
+- **Data / ML:** pandas, pypdf, pdfplumber, SQLite (SHA-256 hash-chained audit trail)
+- **Frontend:** Next.js 14 (App Router), React, Tailwind CSS, Server-Sent Events
+- **Testing / tooling:** pytest, pytest-asyncio, PowerShell launch scripts
 
 ## Getting Started
 
-### 1. Clone the repository
+### Prerequisites
+
+- Python 3.11+
+- Node.js 18+
+- A free Groq API key from https://console.groq.com/keys
+
+### Installation
+
 ```bash
 git clone https://github.com/DCode-v05/Compliance-Crew.git
 cd Compliance-Crew
-```
 
-### 2. Backend setup (Python 3.11+)
-```bash
+# Backend (Python 3.11+)
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1            # Windows PowerShell  (or: source .venv/bin/activate)
+source .venv/bin/activate          # Windows: .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
-cp .env.example .env                     # then add your free Groq key:
-#   GROQ_API_KEY  ->  https://console.groq.com/keys
+cp .env.example .env               # then add GROQ_API_KEY
+python scripts/seed_db.py --reset  # initialise a clean, hash-chained database
 
-python scripts/seed_db.py --reset        # initialise a clean, hash-chained database
-```
-The synthetic bank data is included; regenerate it any time with
-`python scripts/generate_synthetic_data.py`.
-
-### 3. Frontend setup (Node 18+)
-```bash
+# Frontend (Node 18+)
 cd frontend
 npm install
-cp .env.local.example .env.local         # defaults to http://localhost:8000
+cp .env.local.example .env.local   # defaults to http://localhost:8000
 cd ..
 ```
 
-### 4. Run
-The easiest way on Windows — from the repo root:
+The synthetic bank data is included; regenerate it any time with `python scripts/generate_synthetic_data.py`.
+
+### Running
+
 ```powershell
-.\start.ps1        # opens the API and the console in two windows
+# Windows, from the repo root — opens API + console in two windows
+.\start.ps1
 ```
+
 Or run each side manually:
-```powershell
-# Terminal 1 — API  (http://localhost:8000, Swagger at /docs)
+
+```bash
+# Terminal 1 — API (http://localhost:8000, Swagger at /docs)
 uvicorn api.main:app --reload --port 8000
 
-# Terminal 2 — Console  (http://localhost:3000)
-cd frontend; npm run dev
+# Terminal 2 — Console (http://localhost:3000)
+cd frontend && npm run dev
 ```
-Then open **http://localhost:3000**.
 
----
+Then open http://localhost:3000.
 
 ## Usage
-- Open the console, go to **Circulars**, and drag in an RBI circular (PDF/TXT/MD) — or use the bundled sample KYC circular.
-- On **Pipeline**, pick the circular and click **Run pipeline**; watch the six agents stream their reasoning live.
-- Inspect the results on **Controls**: each control's citation, validation verdict, department routing, and evidence, plus the **Report** and **Audit trail** tabs.
-- Ask questions on the **Assistant** — answers are grounded in the run and cited to the regulation.
 
-**CLI-only** (no frontend): `python -m src.graph data/circulars/sample_kyc_paragraphs.txt`
+1. Open the console, go to **Circulars**, and drag in an RBI circular (PDF/TXT/MD) — or use the bundled sample KYC paragraphs.
+2. On **Pipeline**, pick the circular and click **Run pipeline**; watch the six agents stream their reasoning live.
+3. Inspect results on **Controls**: each control's citation, validation verdict, department routing, and evidence, plus the **Report** and **Audit trail** tabs.
+4. Ask questions on the **Assistant** — answers are grounded in the run and cited to the regulation.
+
+CLI-only (no frontend):
+
+```bash
+python -m src.graph data/circulars/sample_kyc_paragraphs.txt
+```
 
 Key API endpoints (interactive docs at `http://localhost:8000/docs`):
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| POST | `/api/v1/pipeline/run` | Run the pipeline (blocking) → summary |
+| POST | `/api/v1/pipeline/run` | Run the pipeline to completion → summary |
 | GET  | `/api/v1/pipeline/stream` | Live SSE stream of agent reasoning |
-| GET  | `/api/v1/dashboard/stats` | Cumulative compliance metrics |
-| GET  | `/api/v1/circulars` · `POST /circulars/upload` | List / upload circulars |
-| GET  | `/api/v1/maps?run_id=` | Controls joined with validation, routing, evidence |
+| GET  | `/api/v1/dashboard/stats` | Compliance posture for the Overview |
+| GET  | `/api/v1/circulars` · POST `/upload` | List circulars / upload a PDF |
+| GET  | `/api/v1/maps` | Controls with citation, verdict, routing |
 | POST | `/api/v1/chat` | Grounded compliance Q&A |
-| GET  | `/api/v1/audit/chain` | Verify the SHA-256 audit chain |
-
----
+| GET  | `/api/v1/audit/chain` | Re-verify the SHA-256 audit chain |
 
 ## Project Structure
+
 ```
 Compliance-Crew/
-│
-├── src/                     # LangGraph pipeline
-│   ├── agents/              # ingestor, mapper, validator, assigner, evidence_checker, auditor
-│   ├── prompts/             # system + user prompt templates
-│   ├── utils/               # citation_check, audit_chain (SHA-256), pdf_parser
-│   ├── state.py             # Pydantic shared state
-│   ├── graph.py             # LangGraph wiring with the conditional retry edge
-│   ├── db.py                # SQLite + hash-chained audit trail
-│   └── llm.py               # llm_call() — Groq Llama 3.3 70B
-│
-├── api/                     # FastAPI backend
-│   ├── main.py              # app + CORS + routers
-│   ├── schemas.py           # typed request/response models
-│   ├── services/            # pipeline, chat, dashboard, circular
-│   └── routes/              # pipeline, circulars, maps, dashboard, chat, audit, health
-│
-├── frontend/                # Next.js 14 console ("Ledger" design system)
-│   └── src/
-│       ├── app/             # splash + console pages: dashboard, pipeline, circulars, maps, chat
-│       ├── components/      # TopNav, AgentFlow, EventStream, CircularUpload, ui primitives
-│       └── lib/             # typed API client + types
-│
-├── data/                    # sample circular + synthetic bank data
-├── scripts/                 # generate_synthetic_data.py, seed_db.py, run_api.ps1, run_web.ps1
-├── tests/                   # pytest suite (50 tests)
-├── start.ps1                # one-shot launcher (API + console)
-├── requirements.txt
+├── src/
+│   ├── graph.py                  # LangGraph wiring + the conditional retry edge
+│   ├── state.py                  # ComplianceState — the typed shared state
+│   ├── llm.py                    # single Groq entry point, audit logging, retries
+│   ├── db.py                     # SQLite persistence for the hash chain
+│   ├── agents/                   # ingestor, mapper, validator, assigner,
+│   │                             #   evidence_checker, auditor
+│   ├── prompts/                  # one prompt module per agent + chatbot
+│   └── utils/
+│       ├── audit_chain.py        # SHA-256 hash chain + verify_chain()
+│       ├── citation_check.py     # verbatim substring guardrail
+│       └── pdf_parser.py         # PDF/TXT → cite-able paragraphs
+├── api/
+│   ├── main.py                   # FastAPI app, CORS, router wiring
+│   ├── routes/                   # pipeline, dashboard, circulars, maps, chat, audit, health
+│   ├── services/                 # pipeline / circular / dashboard / chat services
+│   └── schemas.py                # API request/response models
+├── frontend/                     # Next.js 14 console ("Ledger" design system)
+│   └── src/app/(console)/        # dashboard, pipeline, circulars, maps, chat views
+├── scripts/
+│   ├── generate_synthetic_data.py# 10k customers / 50k transactions with seeded violations
+│   ├── seed_db.py                # initialise the hash-chained DB
+│   └── run_api.ps1 / run_web.ps1 # launch helpers
+├── data/
+│   ├── circulars/                # sample KYC paragraphs
+│   └── synthetic_bank/           # customers.csv, transactions.csv
+├── tests/                        # 50 pytest functions
+├── .claude/skills/regulation-citation/SKILL.md  # citation contract as a Claude skill
+├── start.ps1                     # one-shot Windows launcher
+├── pyproject.toml / requirements.txt
 └── README.md
 ```
 
 ---
 
-## Contributing
-
-Contributions are welcome! To contribute:
-1. Fork the repository
-2. Create a new branch:
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Add your feature"
-   ```
-4. Push to your branch:
-   ```bash
-   git push origin feature/your-feature
-   ```
-5. Open a pull request describing your changes.
-
----
-
 ## Contact
-- **GitHub:** [DCode-v05](https://github.com/DCode-v05)
-- **Email:** denistanb05@gmail.com
+
+**Portfolio:** [Denistan](https://www.denistan.me)<br>
+**LinkedIn:** [Denistan](https://www.linkedin.com/in/denistanb)<br>
+**GitHub:** [DCode-v05](https://github.com/DCode-v05)<br>
+**LeetCode:** [Denistan_B](https://leetcode.com/u/Denistan_B)<br>
+**Email:** [denistanb05@gmail.com](mailto:denistanb05@gmail.com)
+
+Made with ❤️ by **Denistan B**
