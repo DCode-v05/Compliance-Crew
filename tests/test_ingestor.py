@@ -45,7 +45,6 @@ def test_build_circular_meta_classifies_kyc():
 
 
 def test_classify_uses_word_boundaries():
-    # 'ctr' must NOT match inside 'electronic'; this should classify as payments.
     assert _classify("electronic payment systems and settlement") != "KYC/AML"
     assert _classify("cyber security incident reporting") == "Cyber Security"
     assert _classify("KYC and money laundering controls") == "KYC/AML"

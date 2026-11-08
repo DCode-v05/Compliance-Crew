@@ -24,7 +24,6 @@ from src.state import Assignment, ComplianceState, Escalation, MAP
 
 logger = logging.getLogger(__name__)
 
-# Policy bounds for deadlines by priority (working days).
 _DEADLINE_BOUNDS = {
     "critical": (7, 21),
     "urgent": (14, 45),
@@ -39,7 +38,6 @@ _RISK_TO_PRIORITY = {
     "low": "routine",
 }
 
-# Deterministic fallback routing by evidence type if the LLM call fails.
 _EVIDENCE_TO_DEPT = {
     "customer_record": "Retail Banking",
     "transaction_log": "Risk/AML",
@@ -104,7 +102,6 @@ def assigner_node(state: ComplianceState) -> ComplianceState:
             logger.error("Assigner failed on MAP %s: %s", m.map_id, e)
             assignment = _fallback_assignment(m)
 
-        # Normalise: stable id, correct map_id, clamped deadline, valid deps.
         assignment.assignment_id = str(uuid.uuid4())
         assignment.map_id = m.map_id
         assignment.deadline_days = _clamp_deadline(
@@ -128,7 +125,6 @@ def assigner_node(state: ComplianceState) -> ComplianceState:
             }
         )
 
-        # CCO escalation for high/critical-risk controls.
         if m.risk_category in {"high", "critical"}:
             severity = "critical" if m.risk_category == "critical" else "high"
             esc = Escalation(

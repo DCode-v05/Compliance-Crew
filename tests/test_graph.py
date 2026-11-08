@@ -33,7 +33,6 @@ def _map(map_id: str, attempt: int) -> MAP:
 
 def test_graph_compiles():
     g = build_graph()
-    # Smoke: graph has the six expected nodes plus an entry.
     nodes = set(g.get_graph().nodes.keys())
     for expected in {"ingestor", "mapper", "validator", "assigner", "evidence_checker", "auditor"}:
         assert expected in nodes
@@ -42,7 +41,6 @@ def test_graph_compiles():
 def test_route_proceeds_when_nothing_rejected():
     state = ComplianceState(circular_pdf_path="x.pdf")
     state.rejected_map_ids = []
-    # On no rejections we advance to the Assigner (which precedes evidence check).
     assert route_after_validation(state) == "assigner"
 
 
@@ -51,7 +49,6 @@ def test_route_retries_when_under_cap():
     m = _map("m1", attempt=1)
     state.maps = [m]
     state.rejected_map_ids = ["m1"]
-    # MAX_VALIDATION_RETRIES is at least 2, so attempt 1 should retry
     assert MAX_VALIDATION_RETRIES >= 2
     assert route_after_validation(state) == "mapper"
 
@@ -61,5 +58,4 @@ def test_route_proceeds_when_retry_cap_hit():
     m = _map("m1", attempt=MAX_VALIDATION_RETRIES)
     state.maps = [m]
     state.rejected_map_ids = ["m1"]
-    # Cap reached: stop retrying and advance to the Assigner with what we have.
     assert route_after_validation(state) == "assigner"

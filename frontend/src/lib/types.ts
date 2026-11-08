@@ -1,5 +1,3 @@
-// Mirrors api/schemas.py — the single source of truth for the API contract.
-
 export interface Citation {
   paragraph_id: string;
   verbatim_quote: string;

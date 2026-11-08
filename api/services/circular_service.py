@@ -17,9 +17,8 @@ logger = logging.getLogger(__name__)
 
 CIRCULARS_DIR = Path("data/circulars")
 _SUFFIXES = {".pdf", ".txt", ".md"}
-MAX_UPLOAD_BYTES = 15 * 1024 * 1024  # 15 MB
+MAX_UPLOAD_BYTES = 15 * 1024 * 1024
 
-# doc_id -> dict cache (cleared on process restart).
 _CACHE: dict[str, dict] = {}
 
 
@@ -91,7 +90,6 @@ def list_circulars() -> list[dict]:
             meta = _meta_for_path(path)
             if meta:
                 items.append(meta)
-    # Highest urgency first so the most pressing circular leads the view.
     items.sort(key=lambda x: x.get("urgency_score", 0), reverse=True)
     return items
 

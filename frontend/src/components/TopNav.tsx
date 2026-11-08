@@ -27,7 +27,6 @@ export default function TopNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-paper/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1180px] items-center gap-6 px-7">
-        {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5">
           <span className="grid h-8 w-8 place-items-center rounded-lg border border-emerald/25 bg-emerald-soft">
             <ShieldCheck className="h-[18px] w-[18px] text-emerald" strokeWidth={2.2} />
@@ -42,7 +41,6 @@ export default function TopNav() {
           </span>
         </Link>
 
-        {/* Nav */}
         <nav className="ml-4 hidden items-center gap-1 md:flex">
           {NAV.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -64,7 +62,6 @@ export default function TopNav() {
           })}
         </nav>
 
-        {/* Status */}
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 sm:flex">
             <span
@@ -86,7 +83,6 @@ export default function TopNav() {
         </div>
       </div>
 
-      {/* Mobile nav */}
       <nav className="flex items-center gap-1 overflow-x-auto border-t border-line px-5 py-1.5 md:hidden">
         {NAV.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");

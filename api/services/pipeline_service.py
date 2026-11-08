@@ -33,16 +33,13 @@ def _as_state(obj) -> ComplianceState:
     return ComplianceState.model_validate(obj)
 
 
-# --------------------------------------------------------------------------- #
-# Projections
-# --------------------------------------------------------------------------- #
 def build_map_rows(state: ComplianceState) -> list[dict]:
     """Join each MAP with its latest validation, assignment, and evidence check."""
     approved = set(state.approved_map_ids)
     escalated_ids = {e.map_id for e in state.escalations}
 
     val_by_map: dict[str, object] = {}
-    for v in state.validations:  # later entries win → latest verdict per map
+    for v in state.validations:
         val_by_map[v.map_id] = v
     asg_by_map = {a.map_id: a for a in state.assignments}
     ev_by_map = {c.map_id: c for c in state.evidence_checks}
@@ -114,9 +111,6 @@ def _persist(state: ComplianceState, run_id: str, created_at: str) -> dict:
     return summary
 
 
-# --------------------------------------------------------------------------- #
-# Run helpers
-# --------------------------------------------------------------------------- #
 def _prepare_initial(circular_path: str, max_paragraphs: int) -> ComplianceState:
     """Pre-ingest and cap paragraphs so a run stays fast and bounded."""
     init_db()
@@ -182,9 +176,6 @@ def run_stream(circular_path: str, max_paragraphs: int) -> Iterator[dict]:
         yield {"event": "error", "data": {"message": "Pipeline produced no state."}}
 
 
-# --------------------------------------------------------------------------- #
-# Reads
-# --------------------------------------------------------------------------- #
 def latest_run_id() -> str | None:
     runs = list_runs(limit=1)
     return runs[0]["run_id"] if runs else None

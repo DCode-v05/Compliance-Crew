@@ -8,9 +8,6 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
-# --------------------------------------------------------------------------- #
-# Requests
-# --------------------------------------------------------------------------- #
 class RunRequest(BaseModel):
     circular_path: str = "data/circulars/sample_kyc_paragraphs.txt"
     max_paragraphs: int = Field(default=6, ge=1, le=30)
@@ -21,9 +18,6 @@ class ChatRequest(BaseModel):
     run_id: str | None = None
 
 
-# --------------------------------------------------------------------------- #
-# Shared
-# --------------------------------------------------------------------------- #
 class CitationOut(BaseModel):
     paragraph_id: str = ""
     verbatim_quote: str = ""
@@ -31,9 +25,6 @@ class CitationOut(BaseModel):
     source_doc_id: str = ""
 
 
-# --------------------------------------------------------------------------- #
-# Domain responses
-# --------------------------------------------------------------------------- #
 class MapOut(BaseModel):
     """A control with its validation, assignment, and evidence joined in."""
 
@@ -45,17 +36,14 @@ class MapOut(BaseModel):
     risk_category: str
     attempt_number: int = 1
     citation: CitationOut | None = None
-    # Validation
     verdict: str | None = None
     rejection_category: str | None = None
     validation_reasoning: str | None = None
     cited_text: str | None = None
-    # Assignment
     department: str | None = None
     priority: str | None = None
     deadline_days: int | None = None
     dependencies: list[str] = []
-    # Evidence
     evidence_compliant: bool | None = None
     evidence_evaluated: bool | None = None
     violations_found: int | None = None
@@ -123,7 +111,7 @@ class DashboardStats(BaseModel):
     open_escalations: int = 0
     audit_entries: int = 0
     chain_intact: bool = True
-    compliance_rate: float = 0.0  # approved controls passing evidence / approved
+    compliance_rate: float = 0.0
     by_department: list[DepartmentLoad] = []
     by_risk: list[RiskLoad] = []
     recent_runs: list[RunSummary] = []

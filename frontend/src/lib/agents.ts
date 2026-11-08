@@ -1,10 +1,8 @@
-// Shared agent + status metadata (Ledger warm palette) used across the app.
-
 export interface AgentMeta {
   key: string;
   label: string;
   role: string;
-  color: string; // hex
+  color: string;
 }
 
 export const AGENTS: Record<string, AgentMeta> = {

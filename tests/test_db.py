@@ -43,7 +43,6 @@ def test_log_audit_entry_roundtrip(tmp_db):
     assert rows[0]["agent_name"] == "mapper"
     assert rows[0]["latency_ms"] == 120
     assert rows[0]["provider"] == "groq"
-    # Chain columns are populated.
     assert rows[0]["entry_hash"]
 
 
@@ -79,7 +78,6 @@ def test_save_map_and_validation_relate(tmp_db):
 
 
 def test_save_assignment_and_escalation(tmp_db):
-    # Parent MAP must exist first (assignments/escalations FK -> maps).
     save_map(
         MAP(
             map_id="map-1",

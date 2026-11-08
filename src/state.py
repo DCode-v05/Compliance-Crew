@@ -93,9 +93,6 @@ class EvidenceCheck(BaseModel):
     sample_violation_ids: list[str] = []
     reasoning: str
     citation: Citation
-    # False when the control could not actually be tested against the data
-    # (e.g. the query plan couldn't be generated or the query failed). Such a
-    # check must NOT be read as "compliant" — it's simply un-evaluated.
     evaluated: bool = True
 
 
@@ -120,7 +117,7 @@ class Assignment(BaseModel):
     department: Department
     priority: AssignmentPriority
     deadline_days: int = Field(..., ge=1, le=365)
-    dependencies: list[str] = []  # other map_ids this control depends on
+    dependencies: list[str] = []
     rationale: str
 
 
@@ -171,37 +168,28 @@ class ComplianceState(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    # Inputs
     circular_pdf_path: str
     source_doc_id: str = "kyc_master_direction_2016"
     bank_data_dir: str = "data/synthetic_bank"
 
-    # Ingestor outputs
     paragraphs: list[Paragraph] = []
     circular_meta: CircularMeta | None = None
 
-    # Mapper outputs (may contain multiple attempts per paragraph)
     maps: list[MAP] = []
 
-    # Validator outputs
     validations: list[Validation] = []
 
-    # Assigner outputs (department routing for approved controls)
     assignments: list[Assignment] = []
     escalations: list[Escalation] = []
 
-    # Evidence Checker outputs
     evidence_checks: list[EvidenceCheck] = []
 
-    # Auditor output
     final_report_markdown: str = ""
 
-    # Routing flags
     pending_map_ids: list[str] = []
     rejected_map_ids: list[str] = []
     approved_map_ids: list[str] = []
 
-    # Streaming events (replayed into the live pipeline view)
     stream_events: list[dict] = []
 
 

@@ -38,8 +38,6 @@ def _state_with_pending_map(quote: str, paragraph_id: str = "kyc-3.1.4") -> Comp
     s.paragraphs = [para]
     s.maps = [m]
     s.pending_map_ids = ["m1"]
-    # The Mapper persists MAPs before the Validator runs; mirror that so the
-    # validations FK (map_id -> maps) is satisfied.
     save_map(m)
     return s
 
@@ -52,7 +50,6 @@ def test_missing_paragraph_is_rejected(tmp_db):
 
 
 def test_fabricated_quote_rejected_before_llm(tmp_db, monkeypatch):
-    # If the LLM were called this would blow up — but the hash check must reject first.
     def boom(**kwargs):
         raise AssertionError("LLM should not be called for a fabricated quote")
 

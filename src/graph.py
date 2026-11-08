@@ -42,7 +42,6 @@ def route_after_validation(state: ComplianceState) -> str:
 
     rejected_maps = [m for m in state.maps if m.map_id in state.rejected_map_ids]
     if all(m.attempt_number >= MAX_VALIDATION_RETRIES for m in rejected_maps):
-        # Retry cap reached for every rejected MAP — proceed with what we have
         return "assigner"
 
     return "mapper"
@@ -87,7 +86,6 @@ def run_pipeline(
         bank_data_dir=bank_data_dir,
     )
     graph = build_graph()
-    # LangGraph returns either a dict or a state object depending on config.
     result = graph.invoke(initial, config={"recursion_limit": 50})
     if isinstance(result, dict):
         return ComplianceState.model_validate(result)
@@ -98,7 +96,6 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        # Default to the sample paragraph file if no PDF is given
         sample = Path("data/circulars/sample_kyc_paragraph.txt")
         if not sample.exists():
             print(

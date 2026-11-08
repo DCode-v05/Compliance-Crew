@@ -1,12 +1,5 @@
 import type { Config } from "tailwindcss";
 
-/**
- * "Ledger" design system — a light, editorial, institutional aesthetic for a
- * regulatory compliance workspace. Warm paper canvas, ink text, a confident
- * emerald accent (the colour of "compliant"), and gold / clay / claret for
- * escalating severity. Serif display (Fraunces) over a grotesque body (Archivo)
- * with a mono (IBM Plex Mono) for data, IDs, and verbatim citations.
- */
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
@@ -28,7 +21,6 @@ const config: Config = {
         gold: "#B5882E",
         clay: "#B05A35",
         claret: "#A8324A",
-        // agent role colours (warm, cohesive)
         ingestor: "#3F6E8C",
         mapper: "#6E5A93",
         validator: "#B5882E",

@@ -3,11 +3,6 @@ import { AGENT_ORDER } from "@/lib/types";
 import { agentMeta } from "@/lib/agents";
 import { Check, RotateCcw } from "lucide-react";
 
-/**
- * Horizontal six-node pipeline visualiser. The active node lifts and glows;
- * completed nodes show a check; the Validator→Mapper retry loop is annotated
- * because that conditional edge is the spine of the system.
- */
 export default function AgentFlow({
   active,
   seen,

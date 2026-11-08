@@ -31,7 +31,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — allow the Next.js dev server and a configurable production origin.
 _origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",

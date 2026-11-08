@@ -17,9 +17,8 @@ from src.state import MAP, Citation, ComplianceState, Paragraph, Validation
 
 def test_system_prompt_includes_full_example_set():
     prompt = build_mapper_system_prompt()
-    # Both the basic and the tiered KYC few-shot examples are always present.
-    assert "every two years" in prompt  # tiered example
-    assert "identity and address" in prompt  # basic example
+    assert "every two years" in prompt
+    assert "identity and address" in prompt
     assert "verbatim_quote" in prompt
 
 
@@ -100,7 +99,7 @@ def test_mapper_passes_retry_feedback_into_user_prompt(monkeypatch, tmp_db):
                 confidence=0.95,
                 source_doc_id="kyc",
             ),
-            attempt_number=1,  # will be overwritten by node
+            attempt_number=1,
         )
 
     monkeypatch.setattr("src.agents.mapper.llm_call", fake_llm_call)
@@ -111,7 +110,6 @@ def test_mapper_passes_retry_feedback_into_user_prompt(monkeypatch, tmp_db):
     assert "scope_mismatch" in captured["user_prompt"]
     assert "every two years for high risk customers" in captured["user_prompt"]
 
-    # The new MAP should be attempt #2 with a fresh UUID.
     assert len(out.maps) == 2
     new_map = out.maps[-1]
     assert new_map.attempt_number == 2

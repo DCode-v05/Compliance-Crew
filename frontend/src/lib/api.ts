@@ -1,5 +1,3 @@
-// Typed API client for the ComplianceCrew FastAPI backend.
-
 import type {
   AuditChainStatus,
   AuditEntry,
@@ -50,7 +48,6 @@ export const api = {
       try {
         detail = (await res.json()).detail ?? detail;
       } catch {
-        /* ignore */
       }
       throw new Error(detail);
     }
@@ -67,7 +64,6 @@ export const api = {
     post<ChatResponse>("/api/v1/chat", { question, run_id }),
   runSync: (circular_path: string, max_paragraphs: number) =>
     post<RunSummary>("/api/v1/pipeline/run", { circular_path, max_paragraphs }),
-  /** URL for the live SSE stream (consumed via EventSource). */
   streamUrl: (circular_path: string, max_paragraphs: number) => {
     const q = new URLSearchParams({
       circular_path,

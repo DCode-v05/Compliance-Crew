@@ -26,7 +26,6 @@ def _citation() -> Citation:
 
 
 def test_citation_confidence_bounds():
-    # confidence must be within 0..1
     with pytest.raises(ValidationError):
         Citation(paragraph_id="p", verbatim_quote="q", confidence=1.5, source_doc_id="d")
     with pytest.raises(ValidationError):
@@ -63,7 +62,7 @@ def test_assignment_deadline_bounds():
             map_id="m1",
             department="Retail Banking",
             priority="urgent",
-            deadline_days=0,  # below ge=1
+            deadline_days=0,
             rationale="r",
         )
 

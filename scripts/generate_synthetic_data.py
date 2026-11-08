@@ -23,16 +23,15 @@ import pandas as pd
 
 OUTPUT_DIR = Path("data/synthetic_bank")
 SEED = 42
-TODAY = date(2026, 5, 23)  # demo date frozen for reproducibility
+TODAY = date(2026, 5, 23)
 
 N_CUSTOMERS = 10_000
 N_TRANSACTIONS = 50_000
 
-# Violation counts
-N_HIGH_RISK_KYC_VIOLATIONS = 50  # high risk, kyc > 2y old
-N_MEDIUM_RISK_KYC_VIOLATIONS = 30  # medium risk, kyc > 8y old
-N_MISSING_KYC = 5  # no kyc date at all
-N_UNFLAGGED_LARGE_TXNS = 200  # > 10 lakh, flagged=0
+N_HIGH_RISK_KYC_VIOLATIONS = 50
+N_MEDIUM_RISK_KYC_VIOLATIONS = 30
+N_MISSING_KYC = 5
+N_UNFLAGGED_LARGE_TXNS = 200
 
 INDIAN_FIRST_NAMES = [
     "Ramesh", "Priya", "Mohammed", "Anjali", "Suresh", "Lakshmi", "Vikram",
@@ -63,7 +62,6 @@ def _days_since(d: date | None) -> int:
 
 def generate_customers(rng: random.Random) -> pd.DataFrame:
     rows: list[dict] = []
-    # Decide which indices are violations up front so they're spread realistically
     indices = list(range(N_CUSTOMERS))
     rng.shuffle(indices)
     violation_high = set(indices[:N_HIGH_RISK_KYC_VIOLATIONS])
@@ -84,10 +82,8 @@ def generate_customers(rng: random.Random) -> pd.DataFrame:
         name = f"{rng.choice(INDIAN_FIRST_NAMES)} {rng.choice(INDIAN_LAST_NAMES)}"
         branch = rng.choice(BRANCH_CODES)
 
-        # Account open date: 0-15 years ago
         account_open = TODAY - timedelta(days=rng.randint(30, 365 * 15))
 
-        # Risk category: planted violations have specific risk; others mixed
         if i in violation_high:
             risk = "high"
         elif i in violation_medium:
@@ -97,24 +93,19 @@ def generate_customers(rng: random.Random) -> pd.DataFrame:
         else:
             risk = rng.choices(["low", "medium", "high"], weights=[55, 35, 10])[0]
 
-        # KYC last updated
         if i in missing_kyc:
             kyc_last: date | None = None
         elif i in violation_high:
-            # > 2 years ago (731-1500 days)
             kyc_last = TODAY - timedelta(days=rng.randint(731, 1500))
         elif i in violation_medium:
-            # > 8 years ago (2921-3600 days)
             kyc_last = TODAY - timedelta(days=rng.randint(2921, 3600))
         else:
-            # Compliant: within risk-appropriate window
             if risk == "high":
                 kyc_last = TODAY - timedelta(days=rng.randint(30, 720))
             elif risk == "medium":
                 kyc_last = TODAY - timedelta(days=rng.randint(30, 2900))
             else:
                 kyc_last = TODAY - timedelta(days=rng.randint(30, 3600))
-            # Ensure kyc not before account open
             if kyc_last < account_open:
                 kyc_last = account_open + timedelta(days=rng.randint(0, 60))
 
@@ -151,7 +142,6 @@ def generate_transactions(rng: random.Random, customer_df: pd.DataFrame) -> pd.D
             amount = float(rng.randint(1_000_001, 5_000_000))
             flagged = 0
         else:
-            # Mostly small, occasionally large but flagged
             if rng.random() < 0.02:
                 amount = float(rng.randint(1_000_001, 5_000_000))
                 flagged = 1
@@ -189,7 +179,6 @@ def main() -> None:
     transactions.to_csv(transactions_path, index=False)
     print(f"  wrote {transactions_path}")
 
-    # Summary of planted violations
     high_risk_old_kyc = customers.query(
         "risk_category == 'high' and (days_since_last_kyc > 730 or days_since_last_kyc < 0)"
     )

@@ -39,7 +39,6 @@ def dashboard_stats() -> dict:
         )
         open_escalations = _scalar(conn, "SELECT COUNT(*) FROM escalations")
         audit_entries = _scalar(conn, "SELECT COUNT(*) FROM audit_entries")
-        # Only checks that actually ran against the data count toward the rate.
         ev_total = _scalar(conn, "SELECT COUNT(*) FROM evidence_checks WHERE evaluated = 1")
         ev_compliant = _scalar(
             conn, "SELECT COUNT(*) FROM evidence_checks WHERE evaluated = 1 AND compliant = 1"

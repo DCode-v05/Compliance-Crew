@@ -1,5 +1,3 @@
-# Launch the ComplianceCrew Next.js frontend (Regulatory Intelligence console).
-# Usage:  .\scripts\run_web.ps1
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $web = Join-Path $root "frontend"

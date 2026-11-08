@@ -1,5 +1,3 @@
-# Launch the ComplianceCrew FastAPI backend (Groq Llama 3.3 70B, free tier).
-# Usage:  .\scripts\run_api.ps1
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root

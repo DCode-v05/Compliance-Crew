@@ -60,7 +60,7 @@ def evidence_node(state: ComplianceState) -> ComplianceState:
 
     for m in approved_maps:
         if any(c.map_id == m.map_id for c in state.evidence_checks):
-            continue  # already checked this MAP
+            continue
 
         para = paragraph_lookup.get(m.paragraph_id)
         para_text = para.text if para else ""
@@ -93,7 +93,6 @@ def evidence_node(state: ComplianceState) -> ComplianceState:
             save_evidence_check(check)
             continue
 
-        # Execute the query against the dataset
         try:
             if plan.dataset_name not in dataset_cache:
                 dataset_cache[plan.dataset_name] = _load_dataset(

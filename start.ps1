@@ -1,7 +1,3 @@
-# One-shot launcher: starts the FastAPI backend and the Next.js console
-# in two separate PowerShell windows.
-#
-# Usage:  .\start.ps1
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 

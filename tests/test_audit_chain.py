@@ -43,7 +43,6 @@ def test_valid_chain_verifies():
 def test_tampered_output_breaks_chain():
     r1 = _row("a", GENESIS_HASH)
     r2 = _row("b", r1["entry_hash"])
-    # Tamper with r2's stored output without recomputing its hash.
     r2["output_json"] = '{"a":999}'
     result = verify_chain([r1, r2])
     assert result.intact is False
@@ -53,7 +52,6 @@ def test_tampered_output_breaks_chain():
 def test_reordered_rows_break_chain():
     r1 = _row("a", GENESIS_HASH)
     r2 = _row("b", r1["entry_hash"])
-    # Swapped order: r2 now appears first but its prev_hash != GENESIS.
     result = verify_chain([r2, r1])
     assert result.intact is False
     assert result.broken_at == 1

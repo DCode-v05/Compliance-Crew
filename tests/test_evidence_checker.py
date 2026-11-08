@@ -49,7 +49,6 @@ def _state_with_one_map(bank_data_dir: str) -> ComplianceState:
     s.paragraphs = [para]
     s.maps = [m]
     s.approved_map_ids = ["m1"]
-    # Persist the MAP so the evidence_checks FK (map_id -> maps) is satisfied.
     save_map(m)
     return s
 
@@ -88,8 +87,6 @@ def test_malformed_query_is_not_evaluated(tmp_db, monkeypatch, bank_dir):
 
     assert len(out.evidence_checks) == 1
     ev = out.evidence_checks[0]
-    # A failed query must NOT crash the pipeline, and must be recorded as
-    # un-evaluated (not silently "compliant").
     assert ev.evaluated is False
     assert ev.compliant is False
     assert ev.violations_found == 0

@@ -25,7 +25,6 @@ from src.utils.pdf_parser import extract_pages
 logger = logging.getLogger(__name__)
 
 
-# Keyword -> classification, in priority order. First hit wins.
 _CLASSIFICATION_RULES: list[tuple[str, list[str]]] = [
     ("KYC/AML", ["kyc", "know your customer", "money laundering", "pmla", "cdd",
                  "suspicious transaction", "str", "ctr", "fiu"]),
@@ -37,7 +36,6 @@ _CLASSIFICATION_RULES: list[tuple[str, list[str]]] = [
     ("Governance", ["board", "governance", "disclosure", "audit committee"]),
 ]
 
-# Terms that raise a circular's urgency score.
 _URGENCY_TERMS = [
     "immediate", "with immediate effect", "within seven", "within 7",
     "shall report", "mandatory", "penalty", "non-compliance", "deadline",
@@ -74,7 +72,6 @@ def _classify(text: str) -> str:
 def _urgency_score(text: str, paragraph_count: int) -> float:
     low = text.lower()
     hits = sum(1 for t in _URGENCY_TERMS if _has_term(low, t))
-    # Base 0.35, +0.08 per urgency term (cap contribution), small size factor.
     score = 0.35 + min(hits, 6) * 0.08 + min(paragraph_count, 10) * 0.01
     return round(min(score, 0.99), 2)
 
@@ -121,15 +118,12 @@ def build_circular_meta(
 
 
 _SECTION_PATTERNS = [
-    # "3.1.4 Title" or "3.1.4. Title"
     re.compile(r"^\s*(\d+(?:\.\d+){1,3})\.?\s+(.+)$"),
-    # "38. Title" (top-level paragraph numbering common in RBI Master Directions)
     re.compile(r"^\s*(\d{1,3})\.\s+(.+)$"),
-    # "(a) Text" or "(i) Text" subclauses
     re.compile(r"^\s*\(([a-z]{1,3}|[ivx]{1,4})\)\s+(.+)$", re.IGNORECASE),
 ]
 
-_MIN_PARAGRAPH_CHARS = 60  # below this we treat as a noise line
+_MIN_PARAGRAPH_CHARS = 60
 
 
 def _detect_section_header(line: str) -> tuple[str, str] | None:

@@ -54,7 +54,6 @@ def validator_node(state: ComplianceState) -> ComplianceState:
             save_validation(v)
             continue
 
-        # Pre-LLM hash check — catches hallucinated citations for free.
         if not verify_verbatim_quote(m.citation.verbatim_quote, source_para.text):
             v = Validation(
                 validation_id=str(uuid.uuid4()),

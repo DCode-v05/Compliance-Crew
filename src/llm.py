@@ -34,8 +34,6 @@ T = TypeVar("T", bound=BaseModel)
 
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
-# Lazy client — instantiated on first use so importing this module doesn't fail
-# when the key isn't configured yet.
 _groq_client = None
 
 
@@ -65,8 +63,6 @@ def _strip_code_fences(text: str) -> str:
     return text.strip()
 
 
-# JSON-Schema keywords we drop from the schema hint — they add noise without
-# helping the model, and validation happens against the Pydantic model anyway.
 _DROP_SCHEMA_KEYS = {
     "$defs",
     "title",
@@ -184,8 +180,6 @@ def _call_groq(
     temperature: float,
 ) -> T:
     client = _get_groq_client()
-    # Compact (no-indent) schema hint to minimise input tokens — meaningful on
-    # free-tier daily token budgets where every call counts.
     schema_hint = json.dumps(
         _clean_schema(response_schema.model_json_schema()), separators=(",", ":")
     )

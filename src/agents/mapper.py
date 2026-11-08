@@ -79,10 +79,8 @@ def mapper_node(state: ComplianceState) -> ComplianceState:
             logger.error("Mapper failed on %s: %s", para.paragraph_id, e)
             continue
 
-        # The LLM may echo a placeholder map_id from the schema — overwrite.
         result.map_id = str(uuid.uuid4())
         result.attempt_number = attempt
-        # Ensure paragraph_id matches the source, regardless of model output
         result.paragraph_id = para.paragraph_id
         result.citation.paragraph_id = para.paragraph_id
         result.citation.source_doc_id = para.source_doc_id

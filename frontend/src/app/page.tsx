@@ -22,7 +22,6 @@ export default function Splash() {
   return (
     <div className="relative min-h-screen">
       <div className="mx-auto flex min-h-screen max-w-[1080px] flex-col px-7">
-        {/* Masthead */}
         <motion.header {...fade(0)} className="flex items-center justify-between border-b border-line py-6">
           <div className="flex items-center gap-2.5">
             <span className="grid h-8 w-8 place-items-center rounded-lg border border-emerald/25 bg-emerald-soft">
@@ -37,7 +36,6 @@ export default function Splash() {
           </div>
         </motion.header>
 
-        {/* Hero */}
         <div className="flex flex-1 flex-col justify-center py-14">
           <motion.div {...fade(0.06)} className="mb-6 flex items-center gap-3">
             <span className="kicker">Reserve Bank of India · KYC / AML</span>
@@ -61,7 +59,6 @@ export default function Splash() {
             paragraph of the regulation.
           </motion.p>
 
-          {/* Agent ledger */}
           <motion.div {...fade(0.28)} className="mt-9 flex flex-wrap items-center gap-x-1 gap-y-3">
             {AGENT_ORDER.map((k, i) => {
               const m = agentMeta(k);
@@ -97,7 +94,6 @@ export default function Splash() {
           </motion.div>
         </div>
 
-        {/* Pillars */}
         <motion.div {...fade(0.44)} className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3 mb-12">
           {PILLARS.map((p) => {
             const Icon = p.icon;

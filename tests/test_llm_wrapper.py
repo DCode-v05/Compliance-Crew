@@ -30,7 +30,6 @@ def test_clean_schema_removes_defs_and_inlines_refs():
     schema = MAP.model_json_schema()
     cleaned = _clean_schema(schema)
     assert "$defs" not in cleaned
-    # No remaining $ref anywhere in the cleaned schema.
     import json as _json
 
     serialised = _json.dumps(cleaned)
@@ -41,8 +40,6 @@ def test_clean_schema_removes_defs_and_inlines_refs():
 def test_clean_schema_keeps_enums():
     schema = MAP.model_json_schema()
     cleaned = _clean_schema(schema)
-    # The cleaned schema should still describe properties (the model has
-    # control_title, evidence_type, etc.)
     assert "properties" in cleaned
 
 
@@ -57,8 +54,6 @@ def test_clean_schema_drops_title_and_additional_properties():
 
 
 def test_clean_schema_strips_unsupported_constraints():
-    # MAP's Citation has max_length / ge / le -> these JSON-Schema keywords must
-    # be pruned (some providers reject them).
     import json as _json
 
     serialised = _json.dumps(_clean_schema(MAP.model_json_schema()))
